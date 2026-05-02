@@ -7,12 +7,12 @@
 ## 掃描摘要
 
 - Target: `E:\WorkSpace\CodeX`
-- Generated at: 2026-05-02T06:33:41.204Z
+- Generated at: 2026-05-02T06:46:27.262Z
 - Node project: yes
 - Package name: repopilot
 - TypeScript config: present
 - README: present
-- Total files: 14
+- Total files: 16
 - Source files: 8
 - Test files: 1
 
@@ -24,16 +24,22 @@
 
 ## 發現項目
 
-### [MEDIUM] Gemini returned prose instead of structured findings
+### [MEDIUM] Agent workflow is available but still deterministic
 
-- Source: gemini
-- Summary: * Role: RepoPilot's ReviewerAgent. * Input: JSON describing a TypeScript repository (project metadata, structure, quality signals). * Output: A single parseable JSON array of 1-5 findings. * Finding structure: `severity` (low, medium, high), `title`, `summary`, `recommendation`. * Constraints: No comments, no extra text, valid JSON. * `project`: Node project, TypeScript, `package.json` exists, scripts for build/lint/test/analyze. * `structure`: * `src` and `tests` directories. * Total files: ...
-- Recommendation: Review the prose response and retry with the same model, a lower temperature, or a model that follows JSON output more consistently.
+- Source: mock-ai
+- Summary: The current MVP routes repository context through a provider interface, which proves the AI orchestration boundary without requiring a live model key.
+- Recommendation: Connect the provider interface to MiMo API once credentials and rate limits are available, then compare model findings with rule findings.
+
+### [MEDIUM] Largest file should be monitored for complexity
+
+- Source: mock-ai
+- Summary: src/agents.ts is currently the largest scanned file at 382 lines.
+- Recommendation: Track this file as the project grows and split responsibilities if it starts mixing CLI, scanning, and reporting logic.
 
 
 ## 原始碼結構
 
-- Top-level directories: `src`, `tests`
+- Top-level directories: `.github`, `docs`, `src`, `tests`
 - Risky areas: large files: src/agents.ts
 
 ### Largest files
