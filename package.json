@@ -1,0 +1,27 @@
+{
+  "name": "repopilot",
+  "version": "0.1.0",
+  "description": "AI-agent assisted TypeScript repository analysis CLI.",
+  "type": "module",
+  "bin": {
+    "repopilot": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "analyze:self": "tsx src/cli.ts analyze --target . --out reports/repopilot-report.md"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
