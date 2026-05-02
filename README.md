@@ -22,6 +22,20 @@ Defaults:
 
 - `--target .`
 - `--out reports/repopilot-report.md`
+- `--provider mock`
+
+Use Gemini when `GEMINI_API_KEY` is available:
+
+```bash
+GEMINI_API_KEY=your-key repopilot analyze --provider gemini --model gemini-2.5-flash
+```
+
+PowerShell:
+
+```powershell
+$env:GEMINI_API_KEY = "your-key"
+repopilot analyze --provider gemini --model gemini-2.5-flash
+```
 
 ## Agent Flow
 
@@ -29,4 +43,4 @@ Defaults:
 2. `ReviewerAgent` combines rule-based checks with a pluggable AI provider.
 3. `ReportAgent` renders the final Markdown report.
 
-The MVP uses `MockAiProvider` for stable repeatable output and keeps a `MimoProvider` placeholder for future MiMo API integration.
+The MVP uses `MockAiProvider` for stable repeatable output, supports `GeminiProvider` through `GEMINI_API_KEY`, and keeps a `MimoProvider` placeholder for future MiMo API integration.

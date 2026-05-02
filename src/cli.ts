@@ -14,11 +14,19 @@ program
   .description("Analyze a repository and write a Markdown report")
   .option("--target <path>", "repository path to scan", ".")
   .option("--out <file>", "Markdown report output path", "reports/repopilot-report.md")
-  .action(async (options: { target: string; out: string }) => {
+  .option("--provider <name>", "AI provider to use: mock or gemini", "mock")
+  .option("--model <name>", "model name for provider-backed analysis")
+  .action(async (options: { target: string; out: string; provider: string; model?: string }) => {
     try {
+      if (options.provider !== "mock" && options.provider !== "gemini") {
+        throw new Error(`Unsupported provider: ${options.provider}`);
+      }
+
       const result = await analyzeRepository({
         target: options.target,
-        out: options.out
+        out: options.out,
+        provider: options.provider,
+        model: options.model
       });
 
       console.log(`RepoPilot report written to ${result.outputPath}`);

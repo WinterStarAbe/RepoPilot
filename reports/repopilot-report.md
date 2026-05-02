@@ -7,7 +7,7 @@
 ## 掃描摘要
 
 - Target: `E:\WorkSpace\CodeX`
-- Generated at: 2026-05-02T02:25:59.776Z
+- Generated at: 2026-05-02T06:33:41.204Z
 - Node project: yes
 - Package name: repopilot
 - TypeScript config: present
@@ -24,17 +24,11 @@
 
 ## 發現項目
 
-### [MEDIUM] Agent workflow is available but still deterministic
+### [MEDIUM] Gemini returned prose instead of structured findings
 
-- Source: mock-ai
-- Summary: The current MVP routes repository context through a provider interface, which proves the AI orchestration boundary without requiring a live model key.
-- Recommendation: Connect the provider interface to MiMo API once credentials and rate limits are available, then compare model findings with rule findings.
-
-### [MEDIUM] Largest file should be monitored for complexity
-
-- Source: mock-ai
-- Summary: src/agents.ts is currently the largest scanned file at 381 lines.
-- Recommendation: Track this file as the project grows and split responsibilities if it starts mixing CLI, scanning, and reporting logic.
+- Source: gemini
+- Summary: * Role: RepoPilot's ReviewerAgent. * Input: JSON describing a TypeScript repository (project metadata, structure, quality signals). * Output: A single parseable JSON array of 1-5 findings. * Finding structure: `severity` (low, medium, high), `title`, `summary`, `recommendation`. * Constraints: No comments, no extra text, valid JSON. * `project`: Node project, TypeScript, `package.json` exists, scripts for build/lint/test/analyze. * `structure`: * `src` and `tests` directories. * Total files: ...
+- Recommendation: Review the prose response and retry with the same model, a lower temperature, or a model that follows JSON output more consistently.
 
 
 ## 原始碼結構
@@ -44,18 +38,19 @@
 
 ### Largest files
 
-- `src/agents.ts`: 381 lines, 12769 bytes
-- `tests/analyze.test.ts`: 119 lines, 4016 bytes
-- `src/types.ts`: 64 lines, 1232 bytes
-- `src/providers.ts`: 56 lines, 2080 bytes
-- `src/cli.ts`: 36 lines, 1177 bytes
+- `src/agents.ts`: 382 lines, 12957 bytes
+- `tests/analyze.test.ts`: 295 lines, 9289 bytes
+- `src/providers.ts`: 293 lines, 8504 bytes
+- `src/types.ts`: 66 lines, 1293 bytes
+- `src/cli.ts`: 44 lines, 1578 bytes
 
 ## 建議下一步
 
-- 接入 MiMo API provider，將 mock findings 替換為真實模型推理結果。
+- 使用 `--provider gemini` 與 `GEMINI_API_KEY` 產生真實模型 findings，將 mock findings 替換為 Gemini 推理結果。
+- 保留 MiMoProvider placeholder，等 MiMo API key 可用後再接入同一個 provider 介面。
 - 增加 patch generation agent，針對高信心問題產生最小修改建議。
 - 將 CLI 報告接到 PR 描述或 CI artifact，形成 review 閉環。
 
 ## 申請表成果描述草稿
 
-我構建了一個名為 RepoPilot 的 AI 多 Agent 程式碼庫分析 CLI，用於解決 TypeScript 專案技術債、測試缺口與 code review 成本過高的問題。系統由 ExplorerAgent、ReviewerAgent 與 ReportAgent 協作，先掃描 repo 結構、package scripts、TypeScript 設定與檔案分布，再結合規則式檢查與可插拔 AI provider 產生風險 findings，最後輸出 Markdown 分析報告。第一版使用穩定的 MockAiProvider 驗證 Agent 流程，並保留 MiMo API provider 介面，後續可直接接入真實模型進行長鏈推理分析與重構建議。
+我構建了一個名為 RepoPilot 的 AI 多 Agent 程式碼庫分析 CLI，用於解決 TypeScript 專案技術債、測試缺口與 code review 成本過高的問題。系統由 ExplorerAgent、ReviewerAgent 與 ReportAgent 協作，先掃描 repo 結構、package scripts、TypeScript 設定與檔案分布，再結合規則式檢查與可插拔 AI provider 產生風險 findings，最後輸出 Markdown 分析報告。第一版使用穩定的 MockAiProvider 驗證 Agent 流程，並已支援透過 GEMINI_API_KEY 啟用 GeminiProvider 產生真實模型 findings；MiMoProvider 則保留為同一介面的後續接入點。

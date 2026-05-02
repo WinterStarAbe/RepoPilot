@@ -120,13 +120,14 @@ export class ReportAgent {
       "",
       "## 建議下一步",
       "",
-      "- 接入 MiMo API provider，將 mock findings 替換為真實模型推理結果。",
+      "- 使用 `--provider gemini` 與 `GEMINI_API_KEY` 產生真實模型 findings，將 mock findings 替換為 Gemini 推理結果。",
+      "- 保留 MiMoProvider placeholder，等 MiMo API key 可用後再接入同一個 provider 介面。",
       "- 增加 patch generation agent，針對高信心問題產生最小修改建議。",
       "- 將 CLI 報告接到 PR 描述或 CI artifact，形成 review 閉環。",
       "",
       "## 申請表成果描述草稿",
       "",
-      "我構建了一個名為 RepoPilot 的 AI 多 Agent 程式碼庫分析 CLI，用於解決 TypeScript 專案技術債、測試缺口與 code review 成本過高的問題。系統由 ExplorerAgent、ReviewerAgent 與 ReportAgent 協作，先掃描 repo 結構、package scripts、TypeScript 設定與檔案分布，再結合規則式檢查與可插拔 AI provider 產生風險 findings，最後輸出 Markdown 分析報告。第一版使用穩定的 MockAiProvider 驗證 Agent 流程，並保留 MiMo API provider 介面，後續可直接接入真實模型進行長鏈推理分析與重構建議。"
+      "我構建了一個名為 RepoPilot 的 AI 多 Agent 程式碼庫分析 CLI，用於解決 TypeScript 專案技術債、測試缺口與 code review 成本過高的問題。系統由 ExplorerAgent、ReviewerAgent 與 ReportAgent 協作，先掃描 repo 結構、package scripts、TypeScript 設定與檔案分布，再結合規則式檢查與可插拔 AI provider 產生風險 findings，最後輸出 Markdown 分析報告。第一版使用穩定的 MockAiProvider 驗證 Agent 流程，並已支援透過 GEMINI_API_KEY 啟用 GeminiProvider 產生真實模型 findings；MiMoProvider 則保留為同一介面的後續接入點。"
     ].join("\n");
   }
 }

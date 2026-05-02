@@ -42,7 +42,7 @@ export interface Finding {
   title: string;
   summary: string;
   recommendation: string;
-  source: "rule" | "mock-ai" | "mimo";
+  source: "rule" | "mock-ai" | "gemini" | "mimo";
 }
 
 export interface ReviewResult {
@@ -53,6 +53,8 @@ export interface ReviewResult {
 export interface AnalyzeOptions {
   target: string;
   out: string;
+  provider?: "mock" | "gemini";
+  model?: string;
 }
 
 export interface AnalyzeResult {

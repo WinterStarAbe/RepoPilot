@@ -4,6 +4,8 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { analyzeRepository } from "../src/analyze.js";
 import { ExplorerAgent } from "../src/agents.js";
+import { createAiProvider, GeminiProvider } from "../src/providers.js";
+import type { RepoContext } from "../src/types.js";
 
 let tempRoot: string;
 
@@ -13,6 +15,8 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await fs.rm(tempRoot, { recursive: true, force: true });
+  delete process.env.GEMINI_API_KEY;
+  delete process.env.GEMINI_MODEL;
 });
 
 describe("RepoPilot analysis", () => {
@@ -99,6 +103,141 @@ describe("RepoPilot analysis", () => {
 
     await expect(explorer.explore(filePath)).rejects.toThrow("Target path is not a directory");
   });
+
+  it("requires GEMINI_API_KEY for the Gemini provider", () => {
+    expect(() => createAiProvider({ provider: "gemini" })).toThrow("GEMINI_API_KEY is required");
+  });
+
+  it("parses Gemini findings from generateContent output", async () => {
+    const originalFetch = globalThis.fetch;
+    process.env.GEMINI_API_KEY = "test-key";
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      findings: [
+                        {
+                          severity: "high",
+                          title: "Missing validation",
+                          summary: "The CLI should validate provider names before running analysis.",
+                          recommendation: "Reject unsupported providers before creating agents."
+                        }
+                      ]
+                    })
+                  }
+                ]
+              }
+            }
+          ]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+
+    try {
+      const provider = new GeminiProvider({ model: "gemini-2.5-flash" });
+      const findings = await provider.analyzeRepo(createContextFixture());
+
+      expect(findings).toEqual([
+        {
+          severity: "high",
+          title: "Missing validation",
+          summary: "The CLI should validate provider names before running analysis.",
+          recommendation: "Reject unsupported providers before creating agents.",
+          source: "gemini"
+        }
+      ]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("extracts Gemini findings when the model wraps JSON in text", async () => {
+    const originalFetch = globalThis.fetch;
+    process.env.GEMINI_API_KEY = "test-key";
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: [
+                      "Here is the analysis:",
+                      "```json",
+                      "[",
+                      "  {",
+                      "    \"severity\": \"medium\",",
+                      "    \"title\": \"Add CI validation\",",
+                      "    \"summary\": \"The repository should run checks in automation.\",",
+                      "    \"recommendation\": \"Add a CI workflow for build, lint, and test.\"",
+                      "  }",
+                      "]",
+                      "```"
+                    ].join("\n")
+                  }
+                ]
+              }
+            }
+          ]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+
+    try {
+      const provider = new GeminiProvider({ model: "gemini-2.5-flash" });
+      const findings = await provider.analyzeRepo(createContextFixture());
+
+      expect(findings[0]).toMatchObject({
+        severity: "medium",
+        title: "Add CI validation",
+        source: "gemini"
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("falls back to a Gemini prose finding when no JSON can be extracted", async () => {
+    const originalFetch = globalThis.fetch;
+    process.env.GEMINI_API_KEY = "test-key";
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: "* Role: ReviewerAgent\n* Finding: This project should add CI validation."
+                  }
+                ]
+              }
+            }
+          ]
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+
+    try {
+      const provider = new GeminiProvider({ model: "gemini-2.5-flash" });
+      const findings = await provider.analyzeRepo(createContextFixture());
+
+      expect(findings[0]).toMatchObject({
+        severity: "medium",
+        title: "Gemini returned prose instead of structured findings",
+        source: "gemini"
+      });
+      expect(findings[0].summary).toContain("ReviewerAgent");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
 
 async function writeProject(
@@ -115,4 +254,41 @@ async function writeProject(
     await fs.mkdir(path.dirname(absolutePath), { recursive: true });
     await fs.writeFile(absolutePath, content);
   }
+}
+
+function createContextFixture(): RepoContext {
+  return {
+    targetPath: tempRoot,
+    generatedAt: "2026-05-02T00:00:00.000Z",
+    project: {
+      isNodeProject: true,
+      package: {
+        exists: true,
+        name: "fixture-app",
+        scripts: {
+          test: "vitest run"
+        },
+        dependencyCount: 0,
+        devDependencyCount: 1,
+        hasTypeScriptDependency: true
+      },
+      hasTsconfig: true,
+      hasReadme: true
+    },
+    structure: {
+      topLevelDirs: ["src"],
+      totalFiles: 3,
+      sourceFiles: 1,
+      testFiles: 1,
+      largestFiles: [
+        {
+          path: "src/index.ts",
+          lines: 10,
+          bytes: 120
+        }
+      ],
+      riskyAreas: []
+    },
+    qualitySignals: []
+  };
 }
